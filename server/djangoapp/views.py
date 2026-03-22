@@ -43,8 +43,8 @@ def login_user(request):
             # Successful login - create session
             login(request, user)
             response_data = {
-                "username": rosea490,  # use actual username from DB
-                "status": "Authenticated"
+                "username": user.username,  # use actual username from DB
+                "status": True
             }
             logger.info(f"User {user.username} logged in successfully")
             return JsonResponse(response_data, status=200)

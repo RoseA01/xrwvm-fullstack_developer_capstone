@@ -22,13 +22,13 @@ const Login = ({ onClose }) => {
     setError(null);
 
     try {
-      const response = await fetch(loginUrl, {
+      const response = await fetch('/api/login/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userName: username,  // matches what frontend sends
+          userName: rosea490,  // matches what frontend sends
           password,
         }),
       });
