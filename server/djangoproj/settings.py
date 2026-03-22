@@ -28,8 +28,10 @@ SECRET_KEY =\
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [ 
-    "roseamos490-8000.theianext-0-labs-prod-misc-tools-us-east-0.proxy.cognitiveclass.ai"
+ALLOWED_HOSTS = [
+    "roseamos490-8000.theianext-0-labs-prod-misc-tools-us-east-0.proxy.cognitiveclass.ai",
+    "localhost",
+    "127.0.0.1"
 ]
 CSRF_TRUSTED_ORIGINS = [
     "https://roseamos490-8000.theianext-0-labs-prod-misc-tools-us-east-0.proxy.cognitiveclass.ai"
