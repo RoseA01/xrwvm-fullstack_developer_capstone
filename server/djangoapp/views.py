@@ -1,9 +1,11 @@
 from django.http import JsonResponse
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.models import User
 import logging
 import json
 from django.views.decorators.csrf import csrf_exempt
-# from .populate import initiate  # uncomment if needed later
+from .populate import initiate
+
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
 
@@ -13,101 +15,66 @@ logger = logging.getLogger(__name__)
 
 @csrf_exempt
 def login_user(request):
-    """
-    API endpoint for user login (POST only).
-    Expects JSON body: {"username": "...", "password": "..."}
-    Returns JSON with username and status.
-    """
+
     if request.method != 'POST':
-        return JsonResponse(
-            {'error': 'Method not allowed. Use POST for login.'},
-            status=405
-        )
+        return JsonResponse({'error': 'POST request required'}, status=405)
 
     try:
         data = json.loads(request.body)
-        # Support both 'username' and 'userName' (common frontend variations)
-        username = data.get('username') or data.get('userName')
+        username = data.get('userName') or data.get('username')
         password = data.get('password')
 
-        if not username or not password:
-            return JsonResponse(
-                {'error': 'Username and password are required'},
-                status=400
-            )
-
-        # Authenticate the user
-        user = authenticate(request, username=username, password=password)
-
+        user = authenticate(username=username, password=password)
         if user is not None:
-            # Successful login - create session
+            
             login(request, user)
-            response_data = {
-                "username": user.username,  # use actual username from DB
-                "status": True
-            }
-            logger.info(f"User {user.username} logged in successfully")
-            return JsonResponse(response_data, status=200)
+            # SUCCESS: React needs "userName" and "Authenticated"
+            return JsonResponse({"userName": username, "status": "Authenticated"})
         else:
-            # Authentication failed
-            logger.warning(f"Failed login attempt for username: {username}")
-            return JsonResponse(
-                {
-                    "username": username,
-                    "status": "Failed",
-                    "message": "Invalid credentials"
-                },
-                status=401
-            )
-
-    except json.JSONDecodeError:
-        return JsonResponse({'error': 'Invalid JSON format'}, status=400)
+            # FAILURE: React needs this to show 'Invalid Credentials'
+            return JsonResponse({
+                "userName": username, 
+                "status": "Failed", 
+                "message": "Invalid credentials"
+            })
     except Exception as e:
-        logger.error(f"Login error: {str(e)}")
-        return JsonResponse({'error': 'Server error'}, status=500)
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 
+@csrf_exempt
+def logout_request(request):
+    logout(request)
+    return JsonResponse({"userName": ""})
 
-# Create a `logout_request` view to handle sign out request
-# @csrf_exempt
-# def logout_request(request):
-#     # logout(request)
-#     # return JsonResponse({"status": "Logged out"})
-#     pass
+@csrf_exempt
+def registration(request):
+    try:
+        data = json.loads(request.body)
+        username = data.get('userName')
+        password = data.get('password')
+        first_name = data.get('firstName')
+        last_name = data.get('lastName')
+        email = data.get('email')
+    
+        if User.objects.filter(username=username).exists():
+            return JsonResponse({"error": "Already Registered"})
 
+        user = User.objects.create_user(
+            username=username, 
+            first_name=first_name, 
+            last_name=last_name, 
+            password=password, 
+            email=email
+        )
 
-# Create a `registration` view to handle sign up request
-# @csrf_exempt
-# def registration(request):
-#     # Handle user registration (create user, etc.)
-#     # return JsonResponse({...})
-#     pass
+        login(request, user)
+        return JsonResponse({"status": "Authenticated", "userName": username})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
+def get_dealerships(request):
+    if request.method == "GET":
+        # In the next part of the lab, you will use a helper function 
+        # to fetch real data from the backend service.
+        # For now, we return an empty list or mock data.
+        return JsonResponse({"status": 200, "dealers": []})
 
-# Update the `get_dealerships` view to render the index page with a list of dealerships
-# def get_dealerships(request):
-#     # dealerships = Dealer.objects.all()
-#     # return render(request, 'djangoapp/index.html', {'dealerships': dealerships})
-#     pass
-
-
-# Create a `get_dealer_reviews` view to get reviews of a dealer
-# def get_dealer_reviews(request, dealer_id):
-#     # reviews = Review.objects.filter(dealer_id=dealer_id)
-#     # return JsonResponse(...) or render(...)
-#     pass
-
-
-# Create a `get_dealer_details` view to get dealer details
-# def get_dealer_details(request, dealer_id):
-#     # dealer = Dealer.objects.get(id=dealer_id)
-#     # return JsonResponse(...) or render(...)
-#     pass
-
-
-# Create a `add_review` view to submit a review
-# @csrf_exempt
-# def add_review(request):
-#     # if request.method == 'POST':
-#     #     ... save review ...
-#     # return JsonResponse(...)
-#     pass
