@@ -10,5 +10,6 @@ urlpatterns = [
     path(route='logout/', view=views.logout_request, name='logout'),
     path(route='get_dealerships', view=views.get_dealerships, name='get_dealerships'),
     # path for add a review view
+    path(route='get_cars', view=views.get_cars, name='getcars'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
