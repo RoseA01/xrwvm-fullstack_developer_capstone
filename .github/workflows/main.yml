@@ -6,6 +6,7 @@ on:
   pull_request:
     branches: [master, main]
 
+
 jobs:
   lint_python:
     name: Lint Python Files
@@ -35,6 +36,7 @@ jobs:
         # This command finds all Python files recursively and runs flake8 on them
         find . -name "*.py" -exec flake8 {} +
         echo "Linted all the python files successfully"
+
 
   lint_js:
       name: Lint JavaScript Files
