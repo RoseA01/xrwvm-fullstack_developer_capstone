@@ -13,7 +13,7 @@ app.use(express.json());
 const reviews_data = JSON.parse(fs.readFileSync("data/reviews.json", 'utf8'));
 const dealerships_data = JSON.parse(fs.readFileSync("data/dealerships.json", 'utf8'));
 
-mongoose.connect("mongodb://mongo_db:27017/", { dbName: 'dealershipsDB' })
+mongoose.connect("mongodb://localhost:27017/", { dbName: 'dealershipsDB' })
     .then(() => console.log('Connected to MongoDB'))
     .catch(err => console.error('MongoDB connection error:', err));
 
