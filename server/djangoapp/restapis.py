@@ -12,14 +12,19 @@ sentiment_analyzer_url = os.getenv(
     default="http://localhost:5050/")
 
 def get_request(endpoint, **kwargs):
-    request_url = backend_url + endpoint
+    request_url = backend_url.rstrip('/') + endpoint
+    
     print("GET from {} ".format(request_url))
     try:
-        # The 'params' argument automatically handles the '?' and '&' logic for you
-        response = requests.get(request_url, params=kwargs)
+        if kwargs:
+            response = requests.get(request_url, params=kwargs)
+        else:
+            response = requests.get(request_url)
+            
         return response.json()
     except Exception as err:
         print(f"Network exception occurred: {err}")
+        return None
 
 
 def analyze_review_sentiments(text):
