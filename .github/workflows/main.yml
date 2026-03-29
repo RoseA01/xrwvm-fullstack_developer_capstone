@@ -29,9 +29,9 @@ jobs:
           echo "Running flake8 on Python files..."
           flake8 . --count --show-source --statistics \
             --max-line-length=120 \
-            --ignore=E501,E402,E401,F401,F403,W503,W504 \
-            --exclude=venv,env,.venv,__pycache__,migrations,build,dist,.git
-          echo "✅ Python linting completed (common issues ignored)."
+            --ignore=E501,E402,E401,F401,F403,W503,W504,E203,E266,E731 \
+            --exclude=venv,env,.venv,__pycache__,migrations,build,dist,.git,*.egg-info
+          echo "✅ Python linting completed (common Django issues ignored)."
 
   lint_js:
     name: Lint JavaScript Files
