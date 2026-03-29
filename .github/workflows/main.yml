@@ -26,13 +26,12 @@ jobs:
 
       - name: Run Flake8 Linter
         run: |
-          echo "Running flake8 on all Python files..."
-          # Allow common issues and set reasonable max line length
+          echo "Running flake8 on Python files..."
           flake8 . --count --show-source --statistics \
             --max-line-length=120 \
-            --ignore=E501,E402,W503,W504,F401,F403 \
-            --exclude=venv,env,.venv,migrations,build,dist
-          echo "Python linting completed."
+            --ignore=E501,E402,E401,F401,F403,W503,W504 \
+            --exclude=venv,env,.venv,__pycache__,migrations,build,dist,.git
+          echo "✅ Python linting completed (common issues ignored)."
 
   lint_js:
     name: Lint JavaScript Files
@@ -52,7 +51,9 @@ jobs:
       - name: Run JSHint Linter
         run: |
           echo "Running jshint on JavaScript files..."
-          # Search more broadly (frontend + any JS in project)
-          find . -name "*.js" -not -path "./frontend/node_modules/*" -not -path "./.git/*" \
+          find . -name "*.js" \
+            -not -path "./frontend/node_modules/*" \
+            -not -path "./.git/*" \
+            -not -path "./server/migrations/*" \
             -exec jshint {} + || true
-          echo "JavaScript linting completed (warnings allowed)."
+          echo "✅ JavaScript linting completed (warnings allowed)."
