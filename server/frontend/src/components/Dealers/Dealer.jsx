@@ -15,37 +15,76 @@ const Dealer = () => {
   const [dealer, setDealer] = useState({});
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // === IMPORTANT: Use the exact base from your current browser URL ===
+  const BASE_URL = "https://roseamos490-8000.theiadockernext-1-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai";
 
   const dealer_url = `/api/dealer/${id}`;
   const reviews_url = `/api/reviews/dealer/${id}`;
-  const post_review_url = `/api/postreview/${id}`;
+  const post_review_url = `/postreview/${id}`;
 
   const get_dealer = async () => {
     try {
-      const res = await fetch(dealer_url, { method: "GET" });
-      const retobj = await res.json();
+      console.log("Fetching dealer from:", dealer_url);   // ← for debugging
 
-      if (retobj.status === 200) {
-        const dealerData = Array.isArray(retobj.dealer) ? retobj.dealer[0] : retobj.dealer;
-        setDealer(dealerData || {});
+      const res = await fetch(dealer_url, {
+        method: 'GET',
+        credentials: 'include',     // Important for cookies/session in this lab
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
       }
-    } catch (error) {
-      console.error("Error fetching dealer details:", error);
+
+      const retobj = await res.json();
+      console.log("Dealer data received:", retobj);
+
+      if (retobj && (retobj.full_name || retobj.name)) {
+        setDealer(retobj);
+      } else if (retobj?.dealer) {
+        setDealer(Array.isArray(retobj.dealer) ? retobj.dealer[0] : retobj.dealer);
+      } else {
+        setDealer(retobj || {});
+      }
+    } catch (err) {
+      console.error("Error fetching dealer details:", err);
+      setError("Failed to load dealer details.");
     }
   };
 
   const get_reviews = async () => {
     try {
-      const res = await fetch(reviews_url, { method: "GET" });
-      const retobj = await res.json();
+      console.log("Fetching reviews from:", reviews_url);
 
-      console.log("Reviews response:", retobj);
+      const res = await fetch(reviews_url, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
 
-      if (retobj.status === 200) {
-        setReviews(retobj.reviews || []);
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
       }
-    } catch (error) {
-      console.error("Error fetching reviews:", error);
+
+      const retobj = await res.json();
+      console.log("Reviews received:", retobj);
+
+      if (Array.isArray(retobj)) {
+        setReviews(retobj);
+      } else if (retobj?.reviews && Array.isArray(retobj.reviews)) {
+        setReviews(retobj.reviews);
+      } else {
+        setReviews([]);
+      }
+    } catch (err) {
+      console.error("Error fetching reviews:", err);
+      setReviews([]);
     } finally {
       setLoading(false);
     }
@@ -59,12 +98,26 @@ const Dealer = () => {
 
   useEffect(() => {
     if (id) {
+      setLoading(true);
+      setError(null);
       get_dealer();
       get_reviews();
     }
   }, [id]);
 
   const isLoggedIn = sessionStorage.getItem("username") != null;
+
+  if (error) {
+    return (
+      <div style={{ margin: "20px" }}>
+        <Header />
+        <p style={{ color: "red" }}>{error}</p>
+        <p style={{ fontSize: "14px", color: "#666" }}>
+          Check browser console (F12) for detailed error.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ margin: "20px" }}>
@@ -88,6 +141,7 @@ const Dealer = () => {
           {dealer.city}, {dealer.address}, Zip - {dealer.zip}, {dealer.state}
         </h4>
       </div>
+
       <div className="reviews_panel">
         {loading ? (
           <p>Loading Reviews....</p>

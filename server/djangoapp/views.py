@@ -92,18 +92,30 @@ def get_dealer_details(request, dealer_id):
         return JsonResponse({"status":200,"dealer":dealership})
     else:
         return JsonResponse({"status":400,"message":"Bad Request"})
+        
 
 def get_dealer_reviews(request, dealer_id):
     if(dealer_id):
-        endpoint = "/fetchReviews/dealer/"+str(dealer_id)
+        endpoint = "/fetchReviews/dealer/" + str(dealer_id)
         reviews = get_request(endpoint)
-        for review_detail in reviews:
-            response = analyze_review_sentiments(review_detail['review'])
-            print(response)
-            review_detail['sentiment'] = response['sentiment']
-        return JsonResponse({"status":200,"reviews":reviews})
-    else:
-        return JsonResponse({"status":400,"message":"Bad Request"})
+        
+        if reviews:
+            for review_detail in reviews:
+                try:
+                    # We wrap this in a try/except so if sentiment fails, 
+                    # the review STILL shows up on the website.
+                    response = analyze_review_sentiments(review_detail['review'])
+                    if response and 'sentiment' in response:
+                        review_detail['sentiment'] = response['sentiment']
+                    else:
+                        review_detail['sentiment'] = "neutral"
+                except Exception as e:
+                    print(f"Sentiment Analysis failed: {e}")
+                    review_detail['sentiment'] = "neutral"
+            
+            return JsonResponse(reviews, safe=False)
+    
+    return JsonResponse([], safe=False)
 
 @csrf_exempt
 def add_review(request):
@@ -119,12 +131,17 @@ def add_review(request):
         
 def get_cars(request):
     count = CarMake.objects.filter().count()
-    print(count)
+
     if(count == 0):
         initiate()
     car_models = CarModel.objects.select_related('car_make')
     cars = []
     for car_model in car_models:
-        cars.append({"CarModel": car_model.name, "CarMake": car_model.car_make.name})
-    return JsonResponse({"CarModels":cars})
+        cars.append({
+            "car_make": car_model.car_make.name,
+            "car_model": car_model.name
+        })
+    
+    # Use the key your React code is looking for: CarModels
+    return JsonResponse({"CarModels": cars})
 

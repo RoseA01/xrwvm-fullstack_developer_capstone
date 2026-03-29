@@ -27,14 +27,14 @@ async function seedDatabase() {
 
         await Dealership.deleteMany({});
         await Dealership.insertMany(dealerships_data['dealerships']);
-
+        
         console.log('Database seeded successfully');
     } catch (error) {
         console.error('Error seeding database:', error);
     }
 }
 
-seedDatabase();
+seedDatabase(); 
 
 
 app.get('/', async (req, res) => {
@@ -51,13 +51,12 @@ app.get('/fetchReviews', async (req, res) => {
     }
 });
 
-
-app.get('/fetchReviews/dealer/:id', async (req, res) => {
+app.get('/fetchDealer/:id', async (req, res) => {
     try {
-        const documents = await Review.find({ dealership: req.params.id });
-        res.json(documents);
+        const document = await Dealership.findOne({ id: parseInt(req.params.id) });
+        res.json(document);
     } catch (error) {
-        res.status(500).json({ error: 'Error fetching documents' });
+        res.status(500).json({ error: 'Error fetching dealer' });
     }
 });
 
@@ -74,52 +73,46 @@ app.get('/fetchDealers', async (req, res) => {
 
 app.get('/fetchDealers/:state', async (req, res) => {
     try {
-        const documents = await Dealership.find({
-            state: req.params.state
-        });
+        const documents = await Dealership.find({ state: req.params.state });
         res.json(documents);
     } catch (error) {
         res.status(500).json({ error: 'Error fetching documents' });
     }
 });
 
-
-app.get('/fetchDealer/:id', async (req, res) => {
+app.get('/fetchReviews/dealer/:id', async (req, res) => {
     try {
-        const document = await Dealership.findOne({ id: parseInt(req.params.id) });
-        if (!document) {
-            return res.status(404).json({ error: 'Dealer not found' });
-        }
-        res.json(document);
+        const documents = await Review.find({ dealership: parseInt(req.params.id) });
+        res.json(documents);
     } catch (error) {
-        res.status(500).json({ error: 'Error fetching document' });
+        res.status(500).json({ error: 'Error fetching reviews' });
     }
 });
 
-
-app.post('/insert_review', express.raw({ type: '*/*' }), async (req, res) => {
+app.post('/insert_review', async (req, res) => {
+    const data = req.body;
     try {
-        const data = JSON.parse(req.body);
+        const documents = await Review.find().sort({ id: -1 });
+        let new_id = documents.length > 0 ? documents[0].id + 1 : 1;
 
-        const lastReview = await Review.findOne().sort({ id: -1 });
-        const new_id = lastReview ? lastReview.id + 1 : 1;
 
         const review = new Review({
-            id: new_id,
-            name: data['name'],
-            dealership: data['dealership'],
-            review: data['review'],
-            purchase: data['purchase'],
-            purchase_date: data['purchase_date'],
-            car_make: data['car_make'],
-            car_model: data['car_model'],
-            car_year: data['car_year']
+            "id": new_id,
+            "name": data['name'],
+            "dealership": data['dealership'],
+            "review": data['review'],
+            "purchase": data['purchase'],
+            "purchase_date": data['purchase_date'],
+            "car_make": data['car_make'],
+            "car_model": data['car_model'],
+            "car_year": data['car_year'],
         });
 
         const savedReview = await review.save();
+        console.log("SUCCESS: Review saved to database with ID:", new_id);
         res.json(savedReview);
     } catch (error) {
-        console.error(error);
+        console.error("!!! DATABASE REJECTED THE REVIEW:", error.message);
         res.status(500).json({ error: 'Error inserting review' });
     }
 });
